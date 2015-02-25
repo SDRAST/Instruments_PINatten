@@ -13,6 +13,9 @@ from scipy.interpolate import interp1d
 import dill as pickle
 import logging
 
+packages_base = "/usr/local/lib/python2.7/DSN-Sci-packages/"
+destination = packages_base+"MonitorControl/Receivers/WBDC/WBDC2/"
+
 module_logger = logging.getLogger(__name__)
 
 def load_data(filename):
@@ -35,14 +38,15 @@ def load_data(filename):
   refs =    loadtxt(filename, delimiter=',', dtype=str)[0,1:]
   ncols = data.shape[1]
   V = {}
-  P = {}
+  att = {}
   labels = {}
   for column in range(1,ncols): # [1,2,3,4]
     rx = rxs[column + column%2 -1]
     label = rx+' '+headers[column]
+    label = label.replace(' ','-')
     V[label] = data[:,0]
-    P[label] = data[:,column]
-  return V, P, refs
+    att[label] = data[:,column]-float(refs[column-1])
+  return V, att, refs
 
 #---------------------------- functions for obtaining splines -----------------
 
@@ -66,7 +70,7 @@ def get_splines(x, y, indices):
   for index in indices:
     minx = x[index].min()
     maxx = x[index].max()
-    module_logger.debug("get_splines: for %d between %f and %f",
+    module_logger.debug("get_splines: for %s between %f and %f",
                         index, minx, maxx)
     if x[index][0] > x[index][-1]:
       x[index] = x[index][::-1]
@@ -146,13 +150,12 @@ def column_marker(column):
     marker = 'd'
   return marker
 
-def plot_data(V, P, refs,):
-  att = {}
+def plot_data(V, att):
   keys = V.keys()
   keys.sort()
   for key in keys:
     index = keys.index(key)
-    att[key] = P[key] -float(refs[index])
+    #att[key] = P[key] -float(refs[index])
     plot(V[key], att[key], ls='-', marker=column_marker(index),
          label=key)
   grid()
@@ -161,7 +164,6 @@ def plot_data(V, P, refs,):
   ylabel('Insertion Loss (dB)')
   title("Attenuation Curves")
   legend(loc='lower left', numpoints=1)
-  return att
 
 def plot_fit(V, att, v, db, labels, keys, Vstep=0.1, toplabel=""):
   # plot data
@@ -196,38 +198,38 @@ def plot_gradients(v, gradient, keys):
 
 if __name__ == "__main__":
   # get the data
-  V, P, refs = load_data('data.csv')
+  V, att, refs = load_data('wbdc2_data.csv')
   keys = V.keys()
   keys.sort()
   # plot the data
   figure(1)
-  att = plot_data(V, P, refs)
+  plot_data(V, att)
   
   # fit the data
   att_spline,  V_sample_range   = get_splines(V, att, keys)
   ctlV_spline, att_sample_range = get_splines(att, V, keys)
 
   # save the data
-  splfile = open("splines.pkl","wb")
+  splfile = open(destination+"splines.pkl","wb")
   pickle.dump(((att_spline, V_sample_range),
                (ctlV_spline,att_sample_range)), splfile)
   splfile.close()
 
   # verify the fits
-  v, dB    = interpolate(att_spline,  ['R1 18 E','R2 20 H','R1 24 H'], V_sample_range)
-  db, ctlV = interpolate(ctlV_spline, ['R1 18 E','R2 20 H','R1 24 H'], att_sample_range)
+  v, dB    = interpolate(att_spline,  ['R1-18-E','R2-20-H','R1-24-H'], V_sample_range)
+  db, ctlV = interpolate(ctlV_spline, ['R1-18-E','R2-20-H','R1-24-H'], att_sample_range)
   
   # plot the fits
   figure(2)
-  plot_fit(V, att, v, dB, keys, ['R1 18 E','R2 20 H','R1 24 H'],
+  plot_fit(V, att, v, dB, keys, ['R1-18-E','R2-20-H','R1-24-H'],
            toplabel='Cubic spline interpolation on dB')
   figure(3)
-  plot_fit(V, att, ctlV, db, keys, ['R1 18 E','R2 20 H','R1 24 H'],
+  plot_fit(V, att, ctlV, db, keys, ['R1-18-E','R2-20-H','R1-24-H'],
            toplabel='Cubic spline interpolation on V')
   # get the slopes
-  att_gradient = get_derivative(dB,['R1 18 E','R2 20 H','R1 24 H'])
+  att_gradient = get_derivative(dB,['R1-18-E','R2-20-H','R1-24-H'])
   # analyze the slopes
   figure(4)
-  plot_gradients(v, att_gradient, ['R1 18 E','R2 20 H','R1 24 H'])
+  plot_gradients(v, att_gradient, ['R1-18-E','R2-20-H','R1-24-H'])
   show()
 
