@@ -48,7 +48,7 @@ class PINattenuator(Attenuator):
   @type atten_table : dictionary
   @ivar atten_table : control voltage indexed by attenuation
   """
-  def __init__(self, name, voltage_source, ctlV_spline,
+  def __init__(self, parent, name, voltage_source, ctlV_spline,
                min_gain, max_gain):
     """
     """
@@ -59,9 +59,9 @@ class PINattenuator(Attenuator):
     self.max_gain = max_gain
     self.max_atten = self.max_gain - self.min_gain
     mylogger = logging.getLogger(module_logger.name+".PINattenuator")
-    mylogger.debug(" Initializing attenuator %s with voltage source %s",
-                   self.name, self.VS)
-    Attenuator.__init__(self, self.name)
+    mylogger.debug(" Initializing %s with voltage source %s",
+                   self, self.VS)
+    Attenuator.__init__(self, parent=parent, name=self.name)
     self.atten = None
     self.logger = mylogger
     
@@ -96,18 +96,6 @@ class PINattenuator(Attenuator):
       if status:
         self.atten = atten
       return status
-
-  def __str__(self):
-    return self._base_()+' "'+self.name+'"'
-
-  def __repr__(self):
-    return self._base_()+' "'+self.name+'"'
-
-  def _base_(self):
-    """
-    String representing the class instance type
-    """
-    return str(type(self)).split()[-1].strip('>').strip("'").split('.')[-1]
   
 
 # ---------------------------- module methods ---------------------------------

@@ -3,6 +3,14 @@ Calibrate PIN diode attenuators
 
 
 """
+import logging
+import numpy as NP
+
+from support.pyro import get_device_server
+
+from MonitorControl import ClassInstance
+from MonitorControl.Receivers.WBDC.WBDC2.WBDC2hwif import WBDC2hwif
+
 def get_calibration_data(Pinatten, pm,
                            limits=None,
                            bias=None,
@@ -90,3 +98,22 @@ def get_calibration_data(Pinatten, pm,
       datafile.write(text)
       datafile.close()
     return text
+
+if __name__ == "__main__":
+  logging.basicConfig(level=logging.DEBUG)
+  mylogger = logging.getLogger()
+  #pm = ClassInstance()
+  
+  wbdc = get_device_server("wbdc2hw_server-dss43wbdc2", "crux")
+  attens = {}
+  keys = wbdc.request("self.pol_sec.keys()") 
+  mylogger.debug(" pol section keys: %s", keys)
+  for polsec in keys:
+    atten_keys = wbdc.request("self.pol_sec['"+polsec+"'].atten.keys()")
+    mylogger.debug(" pol_sec %s attenuators: %s", polsec, atten_keys)
+    attens[polsec] = {}
+    for key in atten_keys:
+      attens[polsec][key] = wbdc.request("self.pol_sec['"+polsec+"'].atten['"+key+"']")
+  print attens
+
+    
