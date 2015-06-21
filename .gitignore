@@ -4,6 +4,7 @@ __pycache__/
 
 # backups
 *~
+*.kate-swp
 
 # C extensions
 *.so
