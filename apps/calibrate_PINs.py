@@ -319,13 +319,13 @@ if __name__ == "__main__":
   from socket import gethostname
   logging.basicConfig(level=logging.WARNING)
   mylogger = logging.getLogger()
-  mylogger.setLevel(logging.DEBUG)
+  mylogger.setLevel(logging.INFO)
   
   if gethostname() == 'dss43wbdc2':
     ## Needed when data are to be acquired
     fe = get_device_server("FE_server-krx43", "crux")
-    print "Feed 1:",fe.set_WBDC(13) # set feed 1 to sky
-    print "Feed 2:",fe.set_WBDC(15) # set feed 2 to sky
+    print "Feed 1 load is:",fe.set_WBDC(13) # set feed 1 to sky
+    print "Feed 2 load is:",fe.set_WBDC(15) # set feed 2 to sky
     #print fe.set_WBDC(14) # set feed 1 to load
     #print fe.set_WBDC(16) # set feed 2 to load
     for pm in ['PM1', 'PM2', 'PM3', 'PM4']:
@@ -342,12 +342,12 @@ if __name__ == "__main__":
     crossed = rx.get_Xswitch_state()
     if crossed:
       mylogger.warning(" cross-switch in set")
-    pol_secs = {'R1-22': rx.pol_sec['R1-22'],
-		'R2-22': rx.pol_sec['R2-22']}
-    attenuators = {'R1-22-E': pol_secs['R1-22'].atten['R1-22-E'],
+    pol_secs = {'R1-22': rx.pol_sec['R1-22'], 'R2-22': rx.pol_sec['R2-22']}
+    attenuators = {
+       'R1-22-E': pol_secs['R1-22'].atten['R1-22-E'],
 		   'R1-22-H': pol_secs['R1-22'].atten['R1-22-H'],
 		   'R2-22-E': pol_secs['R2-22'].atten['R2-22-E'],
-		   'R2-22-E': pol_secs['R2-22'].atten['R2-22-H']}
+		   'R2-22-H': pol_secs['R2-22'].atten['R2-22-H']}
   
     pkeys = pol_secs.keys(); pkeys.sort()
     akeys = attenuators.keys(); akeys.sort()
@@ -355,46 +355,40 @@ if __name__ == "__main__":
     mylogger.debug(" attenuator keys: %s", akeys)
   
     powers  = {} # dict of lists of measured powers
-    for atn in akeys():
+    for atn in akeys:
       powers[atn] = []
     for ctlV in ctl_volts:
-      for atn in attenuators.keys():
-	attenuators[atn].VS.setVoltage(ctlV)
+      for atn in akeys:
+	      attenuators[atn].VS.setVoltage(ctlV)
       time.sleep(0.5)
       # read all the power meters
       response = fe.read_pms()
       data =  []
       for index in range(len(response)):
-	key = akeys[index]
-	powers[akeys[index]].append(response[index][2])
-    
+	      powers[akeys[index]].append(response[index][2])
+    print powers
+ 
     for pm in ['PM1', 'PM2', 'PM3', 'PM4']:
       # set PMs to W
       print fe.set_WBDC(390+int(pm[-1]))
   elif gethostname() == 'kuiper':
-    powers = NP.array(
-      [[-27.577, -26.127, -27.643, -27.899],
-       [-27.644, -26.21 , -27.719, -27.982],
-       [-27.823, -26.422, -27.927, -28.206],
-       [-28.305, -27.025, -28.514, -28.875],
-       [-29.235, -28.197, -29.658, -30.176],
-       [-30.379, -29.627, -31.047, -31.747],
-       [-31.358, -30.825, -32.207, -33.027],
-       [-32.123, -31.721, -33.035, -33.925],
-       [-32.883, -32.534, -33.749, -34.67 ],
-       [-34.136, -33.775, -34.774, -35.684],
-       [-34.708, -34.341, -35.236, -36.126],
-       [-35.556, -35.18 , -35.937, -36.794],
-       [-36.948, -36.591, -37.14 , -37.932],
-       [-39.593, -39.331, -39.663, -40.311],
-       [-41.351, -41.138, -41.444, -41.984],
-       [-43.543, -43.287, -43.753, -44.165],
-       [-45.362, -44.936, -45.789, -46.066],
-       [-46.156, -45.595, -46.66 , -46.835],
-       [-46.502, -45.834, -46.956, -47.099],
-       [-46.632, -45.942, -47.078, -47.216],
-       [-46.69 , -45.995, -47.139, -47.269],
-       [-46.731, -46.025, -47.163, -47.293]])
+    powers = {
+    'R2-22-E': [-27.31599, -27.395,   -27.59499, -28.17099, -29.297,   -30.69099,
+                -31.863,   -32.704,   -33.42099, -34.451,   -34.91199, -35.613,
+                -36.813,   -39.328,   -41.103,   -43.40599, -45.441,   -46.31600,
+                -46.61099, -46.740,   -46.79399, -46.81799],
+    'R1-22-E': [-27.341,   -27.414,   -27.581,   -28.047,   -28.959,   -30.099,
+                -31.091,   -31.875,   -32.64399, -33.90899, -34.487,   -35.347,
+                -36.749,   -39.39999, -41.154,   -43.32699, -45.134,   -45.92799,
+                -46.234,   -46.39399, -46.44299, -46.47399],
+    'R1-22-H': [-25.696,   -25.77,    -25.974,   -26.550,   -27.69999, -29.13299,
+                -30.349,   -31.263,   -32.090,   -33.34499, -33.91599, -34.762,
+                -36.17499, -38.92399, -40.713,   -42.834,   -44.47099, -45.130,
+                -45.368,   -45.47599, -45.527,   -45.54299],
+    'R2-22-H': [-27.67399, -27.75499, -27.972,   -28.62399, -29.919,   -31.47899,
+                -32.771,   -33.68699, -34.438,   -35.468,   -35.91599, -36.591,
+                -37.74499, -40.136,   -41.81199, -43.966,   -45.856,   -46.622,
+                -46.892,   -46.997,   -47.058,   -47.088]}
   else:
     print "Need code for host", gethostname()
   
