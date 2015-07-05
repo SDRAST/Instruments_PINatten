@@ -141,7 +141,7 @@ def get_splines(filename):
   independent variable, which is control voltage in the first and attenuation
   in the second.
 
-  @param fikename : full path to dill pickle file
+  @param filename : full path to dill pickle file
   @type  filename : str
 
   @return: tuple of tuples of dicts
