@@ -216,8 +216,10 @@ if __name__ == "__main__":
   splfile.close()
 
   # verify the fits
-  v, dB    = interpolate(att_spline,  ['R1-18-E','R2-20-H','R1-24-H'], V_sample_range)
-  db, ctlV = interpolate(ctlV_spline, ['R1-18-E','R2-20-H','R1-24-H'], att_sample_range)
+  v, dB    = interpolate(att_spline,  ['R1-18-E','R2-20-H','R1-24-H'],
+                         V_sample_range)
+  db, ctlV = interpolate(ctlV_spline, ['R1-18-E','R2-20-H','R1-24-H'],
+                         att_sample_range)
   
   # plot the fits
   figure(2)

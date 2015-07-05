@@ -2,8 +2,12 @@
 __pycache__/
 *.py[cod]
 
+# logs
+*log
+
 # backups
 *~
+*.kate-swp
 
 # C extensions
 *.so
