@@ -446,7 +446,7 @@ if __name__ == "__main__":
   db, ctlV = interpolate(ctlV_spline, pkeys, att_sample_range)
 
   # save the data
-  module_path = "/usr/local/lib/python2.7/DSN-Sci-packages/MonitorControl/Receivers/WBDC/WBDC2"
+  module_path = "/usr/local/lib/python2.7/DSN-Sci-packages/MonitorControl/Receivers/WBDC/WBDC2/"
   splfile = open(module_path+"splines.pkl","wb")
   pickle.dump(((att_spline, V_sample_range),
                (ctlV_spline,att_sample_range)), splfile)
