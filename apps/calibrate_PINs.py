@@ -132,6 +132,31 @@ def get_calibration_data(Pinatten, pm,
       datafile.close()
     return text
 
+def get_atten_IDs(filename):
+  """
+  Read data from a comma-separated data file
+
+  Row 1 - reference (input) power level
+  Row 2 - bias voltage
+  Row 3 - total resistance in control voltage circuit
+  Row 4 - serial number
+  Row 5 - Receiver chain
+  Row 6 - Frequency and polarization of channel
+  Rows 7+ contain the data, with control voltage in column 0.
+
+  @return:  power (dict of floats), ctlvolts (dict of floats), refpower (list of str)
+  """
+  serialnos = loadtxt(filename, delimiter=',', skiprows=3, dtype=str)[0,1:]
+  rxs =       loadtxt(filename, delimiter=',', skiprows=4, dtype=str)[0,1:]
+  headers =   loadtxt(filename, delimiter=',', skiprows=5, dtype=str)[0,1:]
+  ID = {}
+  for index in range(0, len(headers), 2):
+    chanIDa = rxs[index]+'-'+headers[index].replace(' ','-')
+    chanIDb = rxs[index]+'-'+headers[index+1].replace(' ','-')
+    ID[chanIDa] = serialnos[index]+'A'
+    ID[chanIDb] = serialnos[index]+'B'
+  return ID
+
 #---------------------------- functions for obtaining splines -----------------
 
 def get_splines(x, y, indices):
@@ -265,7 +290,10 @@ def rezero_data(V, P, refs):
   keys.sort()
   for key in keys:
     index = keys.index(key)
-    att[key] = P[key] -float(refs[index])
+    att[key] = []
+    for pwr in P[key]:
+      att[key].append(pwr - float(refs[index]))
+    att[key] = NP.array(att[key])
   return att
 
 def plot_data(V, P, refs):
@@ -277,11 +305,14 @@ def plot_data(V, P, refs):
   xlabel('Control Volts (V)')
   ylabel('Insertion Loss (dB)')
   title("Attenuation Curves")
-  legend(loc='lower left', numpoints=1)
+  keys = V.keys()
+  keys.sort()
   for key in keys:
+    index = keys.index(key)
     plot(V[key], att[key], ls='-', marker=column_marker(index),
          label=key)
-
+  legend(loc='lower left', numpoints=1)
+  
 def plot_fit(V, att, v, db, labels, keys, Vstep=0.1, toplabel=""):
   # plot data
   allkeys = V.keys()
@@ -301,7 +332,9 @@ def plot_fit(V, att, v, db, labels, keys, Vstep=0.1, toplabel=""):
   title(toplabel) # title('Cubic spline interpolation on dB')                                        #!
 
 def plot_gradients(v, gradient, keys):
-  allkeys = V.keys()
+  """
+  """
+  allkeys = v.keys()
   allkeys.sort()
   for key in keys:
     index = allkeys.index(key)
@@ -391,19 +424,53 @@ if __name__ == "__main__":
                 -46.892,   -46.997,   -47.058,   -47.088]}
   else:
     print "Need code for host", gethostname()
-  
-  cv = NP.array([ctl_volts]*4)
-  P = powers.transpose()
+
+  cv = {}
+  pkeys = powers.keys()
+  pkeys.sort()
+  refs = []
+  for key in pkeys:
+    cv[key] = NP.array(ctl_volts)
+    refs.append(powers[key][0])
+  ID = get_atten_IDs('wbdc2_data.csv')
+
   # re-zero the data
-  att = rezero_data(cv, P, powers[0])
+  att = rezero_data(cv, powers, refs)
 
   # Now do the fitting:
-  att_spline,  V_sample_range   = get_splines(cv, P, range(4))
-  ctlV_spline, att_sample_range = get_splines(P, cv, range(4))
+  att_spline,  V_sample_range   = get_splines(cv, att, pkeys)
+  ctlV_spline, att_sample_range = get_splines(att, cv, pkeys)
 
   # verify the fits
-  v, dB    = interpolate(att_spline,  range(4), V_sample_range)
-  db, ctlV = interpolate(ctlV_spline, range(4), att_sample_range)
+  v, dB    = interpolate(att_spline,  pkeys, V_sample_range)
+  db, ctlV = interpolate(ctlV_spline, pkeys, att_sample_range)
 
+  # save the data
+  module_path = "/usr/local/lib/python2.7/DSN-Sci-packages/MonitorControl/Receivers/WBDC/WBDC2"
+  splfile = open(module_path+"splines.pkl","wb")
+  pickle.dump(((att_spline, V_sample_range),
+               (ctlV_spline,att_sample_range)), splfile)
+  splfile.close()
+
+  # plot the data
+  figure(1)
+  plot_data(cv, powers, refs)
+  xlim(-10,+1)
+
+  # plot the fits
+  figure(2)
+  plot_fit(cv, att, v, dB, pkeys, pkeys,
+           toplabel='Cubic spline interpolation on dB')
+  figure(3)
+  plot_fit(cv, att, ctlV, db, pkeys, pkeys,
+           toplabel='Cubic spline interpolation on V')
+
+  # get the slopes
+  att_gradient = get_derivative(dB, pkeys)
+  # analyze the slopes
+  figure(4)
+  plot_gradients(v, att_gradient, pkeys)
+
+  show()
   
   
