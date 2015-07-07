@@ -51,6 +51,14 @@ class PINattenuator(Attenuator):
   def __init__(self, parent, name, voltage_source, ctlV_spline,
                min_gain, max_gain):
     """
+    @param parent : the object which instantiated this class
+    @type  parent : object
+    
+    @param name : name for this attenuator
+    @type  name : str
+    
+    @param voltage_source : voltage source controlling this attenuator
+    @type  voltage_source : 
     """
     self.name = name
     self.VS = voltage_source
@@ -75,7 +83,9 @@ class PINattenuator(Attenuator):
 
   def set_atten(self, atten):
     """
-    Set the attenuation
+    Set the attenuation.
+    
+    
 
     @param atten : attenuation in dB
     @type  atten : float
@@ -87,7 +97,8 @@ class PINattenuator(Attenuator):
       self.logger.error("set_atten: maximum attenuation is %f", self.max_atten)
       return False
     else:
-      requested = self.max_gain - atten
+      gain = -atten
+      requested = self.max_gain + atten
       self.logger.debug("set_atten: %f dB attenuation is %f dB gain",
                         atten, requested)
       ctl_volts = self.spline(requested)
