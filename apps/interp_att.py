@@ -210,7 +210,7 @@ if __name__ == "__main__":
   ctlV_spline, att_sample_range = get_splines(att, V, keys)
 
   # save the data
-  splfile = open(destination+"splines.pkl","wb")
+  splfile = open(destination+"splines-lab.pkl","wb")
   pickle.dump(((att_spline, V_sample_range),
                (ctlV_spline,att_sample_range)), splfile)
   splfile.close()

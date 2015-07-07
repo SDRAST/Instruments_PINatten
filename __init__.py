@@ -58,7 +58,15 @@ class PINattenuator(Attenuator):
     @type  name : str
     
     @param voltage_source : voltage source controlling this attenuator
-    @type  voltage_source : 
+    @type  voltage_source : VoltageSource instance
+    
+    @param ctlV_spline : spline to convert gain to control voltage
+    @type  ctlV_spline : scipy.interpolate.interp1d instance
+    
+    @param min_gain : minimum gain of the attenuator
+    @type  min_gain : float
+    
+    
     """
     self.name = name
     self.VS = voltage_source
@@ -78,7 +86,7 @@ class PINattenuator(Attenuator):
     Returns attenuation for `pol' inputs of pol section.
 
     Unfortunately, we cannot read the commanded voltage of a TickDAC.
-        """
+    """
     return self.atten
 
   def set_atten(self, atten):
