@@ -1,6 +1,8 @@
 """
 Obtains spline interpolators for the PIN diode attenuators
 
+Data were obtained in the lab using a single frequency from a signal generator.
+
 Creates a file with the spline interpolators and their ranges of validity.
 There are splines for interpolating attenuation, given control voltage, and for
 interpolating control voltage given attenuation. The file has::
