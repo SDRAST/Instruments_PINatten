@@ -106,7 +106,7 @@ class PINattenuator(Attenuator):
       return False
     else:
       gain = -atten
-      requested = self.max_gain + atten
+      requested = self.max_gain + gain
       self.logger.debug("set_atten: %f dB attenuation is %f dB gain",
                         atten, requested)
       ctl_volts = self.spline(requested)
