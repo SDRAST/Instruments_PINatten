@@ -33,6 +33,7 @@ So the WBDC2 configuration is::
 import logging
 import numpy as NP
 import time
+import sys
 from pylab import *
 from scipy.interpolate import interp1d
 import dill as pickle
@@ -365,9 +366,6 @@ if __name__ == "__main__":
       # set PMs to dBm
       print fe.set_WBDC(400+int(pm[-1]))
     
-  # this goes from mininum attenuation to manimum attenuation
-  ctl_volts = [ -10,-9, -8, -7, -6, -5, -4, -3, -2, -1, -0.75, -0.5, -0.25,
-                  0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
 
   if gethostname() == 'dss43wbdc2':
     # get data with direct WBDC control
@@ -387,6 +385,9 @@ if __name__ == "__main__":
     mylogger.debug(" pol section keys: %s", pkeys)
     mylogger.debug(" attenuator keys: %s", akeys)
   
+    # this goes from mininum attenuation to manimum attenuation
+    ctl_volts = range(-10,0) + list(NP.arange(-0.9,0,0.1)) \
+                             + list(NP.arange(0,0.8,0.05))
     powers  = {} # dict of lists of measured powers
     for atn in akeys:
       powers[atn] = []
@@ -405,6 +406,9 @@ if __name__ == "__main__":
       # set PMs to W
       print fe.set_WBDC(390+int(pm[-1]))
   elif gethostname() == 'kuiper':
+    # this goes from mininum attenuation to manimum attenuation
+    ctl_volts = [ -10,  -9,  -8, -7, -6, -5, -4, -3, -2, -1, -0.75, -0.5, -0.25,
+                    0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
     powers = {
     'R2-22-E': [-27.31599, -27.395,   -27.59499, -28.17099, -29.297,   -30.69099,
                 -31.863,   -32.704,   -33.42099, -34.451,   -34.91199, -35.613,
@@ -424,6 +428,7 @@ if __name__ == "__main__":
                 -46.892,   -46.997,   -47.058,   -47.088]}
   else:
     print "Need code for host", gethostname()
+    sys.exit()
 
   cv = {}
   pkeys = powers.keys()
