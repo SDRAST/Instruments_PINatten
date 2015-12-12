@@ -93,8 +93,6 @@ class PINattenuator(Attenuator):
     """
     Set the attenuation.
     
-    
-
     @param atten : attenuation in dB
     @type  atten : float
     """
